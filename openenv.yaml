@@ -1,0 +1,54 @@
+name: proposal-craft-env
+version: "1.0.0"
+description: >
+  An OpenEnv environment for iterative proposal/document drafting.
+  An AI agent writes structured proposals section-by-section,
+  receiving rewards for quality, completeness, and format adherence.
+author: <your-hf-username>
+tags:
+  - real-world
+  - nlp
+  - document-generation
+  - proposal-writing
+tasks:
+  - id: easy_abstract
+    name: "Write a Single Abstract"
+    difficulty: easy
+    max_steps: 5
+  - id: medium_proposal
+    name: "Write a 3-Section Project Proposal"
+    difficulty: medium
+    max_steps: 10
+  - id: hard_full_proposal
+    name: "Write a Full 6-Section Research Proposal"
+    difficulty: hard
+    max_steps: 20
+action_space:
+  type: object
+  fields:
+    - name: section_name
+      type: string
+    - name: content
+      type: string
+    - name: action_type
+      type: string
+      enum: [write, revise, finalize]
+observation_space:
+  type: object
+  fields:
+    - name: task_id
+      type: string
+    - name: task_description
+      type: string
+    - name: sections_required
+      type: list[string]
+    - name: sections_completed
+      type: list[string]
+    - name: current_draft
+      type: dict[string, string]
+    - name: feedback
+      type: string
+    - name: step_count
+      type: integer
+    - name: score_so_far
+      type: float
