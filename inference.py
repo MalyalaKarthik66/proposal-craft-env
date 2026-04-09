@@ -4,7 +4,6 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
 
 import requests
 from openai import OpenAI
@@ -94,7 +93,11 @@ def main() -> None:
             api_key=HF_TOKEN or "no-token",
         )
     except Exception as exc:
-        print(f"Warning: OpenAI client initialization failed: {exc}", file=sys.stderr)
+        print(
+            f"Warning: OpenAI client initialization failed: {exc}",
+            file=sys.stderr,
+            flush=True,
+        )
 
     env = ProposalCraftEnv()
 
@@ -106,18 +109,7 @@ def main() -> None:
             break
 
         obs = env.reset(task_id=task_id)
-        print(
-            json.dumps(
-                {
-                    "[START]": {
-                        "task_id": task_id,
-                        "task_description": obs.task_description,
-                        "sections_required": obs.sections_required,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                    }
-                }
-            )
-        )
+        print(f"[START] task={task_id}", flush=True)
 
         done = False
         step_num = 0
@@ -172,6 +164,7 @@ If all sections are done, use action_type "finalize" with section_name "".
                             f"step={step_num} attempt={attempts}: {exc}"
                         ),
                         file=sys.stderr,
+                        flush=True,
                     )
                 finally:
                     time.sleep(1)
@@ -199,20 +192,11 @@ If all sections are done, use action_type "finalize" with section_name "".
             total_reward += result.reward.value
 
             print(
-                json.dumps(
-                    {
-                        "[STEP]": {
-                            "task_id": task_id,
-                            "step": step_num,
-                            "action_type": action.action_type,
-                            "section_name": action.section_name,
-                            "reward": result.reward.value,
-                            "total_reward": round(total_reward, 4),
-                            "done": done,
-                            "feedback": result.reward.feedback,
-                        }
-                    }
-                )
+                (
+                    f"[STEP] task={task_id} step={step_num} reward={result.reward.value} "
+                    f"total_reward={round(total_reward, 4)} done={str(done).lower()}"
+                ),
+                flush=True,
             )
 
         final_score, section_breakdown = grade_task(task_id, obs.current_draft, TASKS[task_id])
@@ -227,10 +211,16 @@ If all sections are done, use action_type "finalize" with section_name "".
             "status": status,
         }
 
-        print(json.dumps({"[END]": end_payload}))
+        print(
+            (
+                f"[END] task={task_id} score={round(final_score, 4)} "
+                f"steps={step_num} status={'done' if done else 'max_steps_reached'}"
+            ),
+            flush=True,
+        )
         summary.append(end_payload)
 
-    print(json.dumps({"summary": summary}))
+    print(json.dumps({"summary": summary}), flush=True)
 
 
 if __name__ == "__main__":
