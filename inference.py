@@ -2,7 +2,6 @@
 
 import json
 import os
-import sys
 import time
 
 import requests
@@ -95,7 +94,6 @@ def main() -> None:
     except Exception as exc:
         print(
             f"Warning: OpenAI client initialization failed: {exc}",
-            file=sys.stderr,
             flush=True,
         )
 
@@ -163,7 +161,6 @@ If all sections are done, use action_type "finalize" with section_name "".
                             f"Warning: LLM call failed for task={task_id} "
                             f"step={step_num} attempt={attempts}: {exc}"
                         ),
-                        file=sys.stderr,
                         flush=True,
                     )
                 finally:
