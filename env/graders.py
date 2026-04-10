@@ -7,6 +7,12 @@ from env.models import Action, Observation, Reward
 from env.tasks import SectionRubric, TaskConfig
 
 
+def _clamp_score(score: float) -> float:
+    """Clamp score to strictly open interval (0.0, 1.0)."""
+
+    return max(0.01, min(0.99, round(score, 4)))
+
+
 def grade_section(content: str, rubric: SectionRubric) -> tuple[float, dict, str]:
     """Score a single section using keyword, length, sentence, and coherence checks."""
 
@@ -135,7 +141,7 @@ def grade_section(content: str, rubric: SectionRubric) -> tuple[float, dict, str
     if transition_bonus > 0.0:
         feedback_parts.append("Transition bonus applied")
 
-    final_score = round(max(0.0, min(score, 1.0)), 4)
+    final_score = _clamp_score(score)
     return final_score, breakdown, "; ".join(feedback_parts)
 
 
@@ -151,7 +157,7 @@ def grade_task(task_id: str, draft: dict[str, str], task_config: TaskConfig) -> 
         section_scores[section] = score
 
     total = sum(section_scores.values()) / len(task_config.sections_required)
-    return round(max(0.0, min(total, 1.0)), 4), section_scores
+    return _clamp_score(total), section_scores
 
 
 def compute_step_reward(
@@ -167,6 +173,7 @@ def compute_step_reward(
 
     if action.action_type == "finalize":
         final_score, section_scores = grade_task(task_config.id, observation.current_draft, task_config)
+        final_score = _clamp_score(final_score)
         feedback = f"Final score: {final_score}. Section scores: {section_scores}"
         return Reward(value=final_score, breakdown=section_scores, feedback=feedback)
 
@@ -178,5 +185,5 @@ def compute_step_reward(
     else:
         step_reward = section_score * (1.0 / len(task_config.sections_required)) * 0.7
 
-    value = round(max(0.0, min(step_reward, 1.0)), 4)
+    value = _clamp_score(step_reward)
     return Reward(value=value, breakdown=breakdown, feedback=feedback_str)

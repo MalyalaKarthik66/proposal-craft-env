@@ -187,16 +187,18 @@ If all sections are done, use action_type "finalize" with section_name "".
             obs = result.observation
             done = result.done
             total_reward += result.reward.value
+            clamped_reward = max(0.01, min(0.99, round(result.reward.value, 4)))
 
             print(
                 (
-                    f"[STEP] task={task_id} step={step_num} reward={result.reward.value} "
+                    f"[STEP] task={task_id} step={step_num} reward={clamped_reward} "
                     f"total_reward={round(total_reward, 4)} done={str(done).lower()}"
                 ),
                 flush=True,
             )
 
         final_score, section_breakdown = grade_task(task_id, obs.current_draft, TASKS[task_id])
+        final_score = max(0.01, min(0.99, round(final_score, 4)))
         status = "done" if done else "max_steps_reached"
         end_payload = {
             "task_id": task_id,
